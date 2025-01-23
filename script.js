@@ -175,8 +175,15 @@ function changeTheme(color) {
     
     document.querySelectorAll('.theme-option').forEach(option => {
         option.classList.remove('selected');
-        if (option.classList.contains(`${color}-theme`)) option.classList.add('selected');
     });
+
+    if(color.startsWith('#')) {
+        const customTheme = document.querySelector('.custom-theme');
+        customTheme.classList.add('selected');
+        customTheme.style.background = color;
+    } else {
+        document.querySelector(`.${color}-theme`).classList.add('selected');
+    }
 
     const root = document.documentElement;
     const themeColor = color === 'blue' ? '#3399ff' : 
@@ -272,7 +279,7 @@ function showConfirmation(text) {
     confirmation.textContent = text;
     confirmation.className = 'confirmation-toast';
     document.body.appendChild(confirmation);
-    setTimeout(() => confirmation.remove(), 2000);
+    setTimeout(() => confirmation.remove(), 3000);
 }
 
 function startFullTest() {
@@ -303,7 +310,7 @@ function startCustomTimer() {
     const customTime = parseInt(document.getElementById("customTime").value);
     const customQuestions = parseInt(document.getElementById("customQuestions").value);
     if (isNaN(customTime) || isNaN(customQuestions) || customTime <= 0 || customQuestions <= 0) {
-        alert("Please enter valid time and number of questions.");
+        showConfirmation("⚠️ Please enter valid time and questions!");
         return;
     }
     startTimer("Custom Section", customTime, customQuestions);
