@@ -12,14 +12,12 @@ const fullTestSections = [
     { name: "Science", time: 35, questions: 40 },
 ];
 
-// Settings System
 let currentTheme = localStorage.getItem('theme') || 'blue';
 let totalTimeTracked = localStorage.getItem('totalTime') ? parseInt(localStorage.getItem('totalTime')) : 0;
 let trackingInterval;
 let trackingStartTime;
 let isSettingsOpen = false;
 
-// Cookie Management
 function getCookie(name) {
     const cookies = document.cookie.split(';');
     for (let cookie of cookies) {
@@ -35,8 +33,8 @@ function setCookie(name, value, days = 365) {
     document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/;SameSite=Lax`;
 }
 
-// Core Timer Functions
 function startTimer(sectionName, durationMinutes, numQuestions) {
+    document.getElementById('settingsGear').style.display = 'none';
     showTimerScreen(sectionName);
     remainingTime = durationMinutes * 60;
     initialTime = remainingTime;
@@ -133,7 +131,6 @@ function startInterval() {
     }, 1000);
 }
 
-// Timer Controls
 function pauseTimer() {
     isRunning = false;
     pauseTracking();
@@ -158,7 +155,6 @@ function resetTimer() {
     pauseTracking();
 }
 
-// Settings System
 function toggleSettings() {
     const menu = document.getElementById('settingsMenu');
     isSettingsOpen = !isSettingsOpen;
@@ -193,7 +189,6 @@ function changeTheme(color) {
     });
 }
 
-// Time Tracking
 function startTracking() {
     trackingStartTime = Date.now();
     trackingInterval = setInterval(() => {
@@ -228,7 +223,6 @@ function updateStatsDisplay() {
     document.getElementById('timeStats').textContent = formatTime(totalTimeTracked);
 }
 
-// Event Listeners
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         pauseTracking();
@@ -248,7 +242,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Initialization
 document.addEventListener('DOMContentLoaded', function() {
     if (!getCookie('speed')) {
         document.getElementById('menu').style.display = 'none';
@@ -262,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
     changeTheme(currentTheme);
 });
 
-// Speed Preference
 function setSpeedPreference(speedValue) {
     setCookie('speed', speedValue);
     document.getElementById('speedSelection').style.display = 'none';
@@ -275,7 +267,6 @@ function resetSpeedPreference() {
     showConfirmation('⏱️ Speed preference reset!');
 }
 
-// UI Helpers
 function showConfirmation(text) {
     const confirmation = document.createElement('div');
     confirmation.textContent = text;
@@ -284,7 +275,6 @@ function showConfirmation(text) {
     setTimeout(() => confirmation.remove(), 2000);
 }
 
-// Full Test Handling
 function startFullTest() {
     currentFullTestSection = 0;
     startNextFullTestSection();
@@ -304,7 +294,6 @@ function nextSection() {
     startNextFullTestSection();
 }
 
-// Custom Timer
 function showCustomInput() {
     document.getElementById("menu").style.display = "none";
     document.getElementById("customInput").style.display = "block";
@@ -320,8 +309,8 @@ function startCustomTimer() {
     startTimer("Custom Section", customTime, customQuestions);
 }
 
-// Navigation
 function goBack() {
+    document.getElementById('settingsGear').style.display = 'block';
     resetTimer();
     document.getElementById("menu").style.display = "flex";
     document.getElementById("timerScreen").style.display = "none";
