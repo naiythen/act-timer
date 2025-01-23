@@ -7,73 +7,75 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <!-- Settings Elements -->
-    <button id="settingsGear" onclick="toggleSettings()">⚙️</button>
-    <div id="settingsMenu">
-        <div class="settings-section">
-            <h3>🎨 Theme Preferences</h3>
-            <div class="theme-options">
-                <div class="theme-option blue-theme selected" onclick="changeTheme('blue')">
-                    <div class="theme-check">✔️</div>
-                </div>
-                <div class="theme-option red-theme" onclick="changeTheme('red')">
-                    <div class="theme-check">✔️</div>
-                </div>
-                <div class="theme-option green-theme" onclick="changeTheme('green')">
-                    <div class="theme-check">✔️</div>
-                </div>
-                <div class="theme-option custom-theme" onclick="document.getElementById('colorPicker').click()">
-                    <input type="color" id="colorPicker" onchange="changeTheme(this.value)" hidden>
-                    <div class="theme-check">✔️</div>
+    <div class="container">
+        <button id="settingsGear" onclick="toggleSettings()">⚙️</button>
+        
+        <div id="settingsMenu">
+            <div class="settings-section">
+                <h3>🎨 Theme Preferences</h3>
+                <div class="theme-options">
+                    <div class="theme-option blue-theme selected" onclick="changeTheme('blue')">
+                        <div class="theme-check">✔️</div>
+                    </div>
+                    <div class="theme-option red-theme" onclick="changeTheme('red')">
+                        <div class="theme-check">✔️</div>
+                    </div>
+                    <div class="theme-option green-theme" onclick="changeTheme('green')">
+                        <div class="theme-check">✔️</div>
+                    </div>
+                    <div class="theme-option custom-theme" onclick="document.getElementById('colorPicker').click()">
+                        <input type="color" id="colorPicker" onchange="changeTheme(this.value)" hidden>
+                        <div class="theme-check">✔️</div>
+                    </div>
                 </div>
             </div>
+            
+            <div class="settings-section">
+                <h3>📈 Usage Statistics</h3>
+                <div id="timeStats" class="stats-display"></div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>⏱️ Speed Preference</h3>
+                <button class="speed-reset" onclick="resetSpeedPreference()">Reset Pace Settings</button>
+            </div>
         </div>
-        <div class="settings-section">
-            <h3>📈 Usage Statistics</h3>
-            <div id="timeStats" class="stats-display"></div>
-        </div>
-        <div class="settings-section">
-            <h3>⏱️ Speed Preference</h3>
-            <button class="speed-reset" onclick="resetSpeedPreference()">Reset Pace Settings</button>
-        </div>
-    </div>
 
-    <div id="speedSelection" style="display: none;">
-        <h2>⏱️ Set Your Pace</h2>
-        <p class="speed-subtitle">Choose how early you want to finish sections:</p>
-        <div class="speed-options">
-            <button class="speed-option" onclick="setSpeedPreference(0)">
-                <div class="speed-content">
-                    <span class="speed-emoji">🕒</span>
-                    <div class="speed-text">
-                        <h3>Right on Time</h3>
-                        <p>Perfect if you like to use all available time</p>
+        <div id="speedSelection" style="display: none;">
+            <h2>⏱️ Set Your Pace</h2>
+            <p class="speed-subtitle">Choose how early you want to finish sections:</p>
+            <div class="speed-options">
+                <button class="speed-option" onclick="setSpeedPreference(0)">
+                    <div class="speed-content">
+                        <span class="speed-emoji">🕒</span>
+                        <div class="speed-text">
+                            <h3>Right on Time</h3>
+                            <p>Perfect if you like to use all available time</p>
+                        </div>
                     </div>
-                </div>
-            </button>
-            <button class="speed-option" onclick="setSpeedPreference(1)">
-                <div class="speed-content">
-                    <span class="speed-emoji">⏩</span>
-                    <div class="speed-text">
-                        <h3>5 Minutes Early</h3>
-                        <p>Gives you time to review answers</p>
+                </button>
+                <button class="speed-option" onclick="setSpeedPreference(1)">
+                    <div class="speed-content">
+                        <span class="speed-emoji">⏩</span>
+                        <div class="speed-text">
+                            <h3>5 Minutes Early</h3>
+                            <p>Gives you time to review answers</p>
+                        </div>
                     </div>
-                </div>
-            </button>
-            <button class="speed-option" onclick="setSpeedPreference(2)">
-                <div class="speed-content">
-                    <span class="speed-emoji">🚀</span>
-                    <div class="speed-text">
-                        <h3>10 Minutes Early</h3>
-                        <p>For fast test-takers who want buffer time</p>
+                </button>
+                <button class="speed-option" onclick="setSpeedPreference(2)">
+                    <div class="speed-content">
+                        <span class="speed-emoji">🚀</span>
+                        <div class="speed-text">
+                            <h3>10 Minutes Early</h3>
+                            <p>For fast test-takers who want buffer time</p>
+                        </div>
                     </div>
-                </div>
-            </button>
+                </button>
+            </div>
+            <p class="speed-note">You can change this later in settings</p>
         </div>
-        <p class="speed-note">You can change this later in settings</p>
-    </div>
 
-    <div class="container">
         <div id="menu">
             <button onclick="startTimer('English', 45, 75)">English (45 min)</button>
             <button onclick="startTimer('Math', 60, 60)">Math (60 min)</button>
@@ -82,6 +84,7 @@
             <button onclick="startFullTest()">Full ACT Test</button>
             <button onclick="showCustomInput()">Custom</button>
         </div>
+
         <div id="customInput" style="display: none; text-align: center;">
             <h2>Custom Timer</h2>
             <label for="customTime">Time (minutes):</label>
@@ -93,6 +96,7 @@
             <button onclick="startCustomTimer()">Start</button>
             <button onclick="goBack()">Cancel</button>
         </div>
+
         <div id="timerScreen">
             <h1 id="sectionTitle"></h1>
             <div id="timeDisplay">00:00</div>
