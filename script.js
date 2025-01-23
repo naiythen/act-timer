@@ -18,6 +18,19 @@ let trackingInterval;
 let trackingStartTime;
 let isSettingsOpen = false;
 
+document.addEventListener('DOMContentLoaded', function() {
+    if (!getCookie('speed')) {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('speedSelection').style.display = 'block';
+    }
+    
+    const backdrop = document.createElement('div');
+    backdrop.className = 'theme-backdrop';
+    document.body.appendChild(backdrop);
+    
+    changeTheme(currentTheme);
+});
+
 function getCookie(name) {
     const cookies = document.cookie.split(';');
     for (let cookie of cookies) {
@@ -177,19 +190,27 @@ function changeTheme(color) {
         option.classList.remove('selected');
     });
 
+    const root = document.documentElement;
+    let themeColor = color;
+    
+    if(color === 'blue') {
+        themeColor = '#3399ff';
+    } else if(color === 'red') {
+        themeColor = '#ff3366';
+    } else if(color === 'green') {
+        themeColor = '#33cc99';
+    }
+    
     if(color.startsWith('#')) {
-        const customTheme = document.querySelector('.custom-theme');
-        customTheme.classList.add('selected');
-        customTheme.style.background = color;
+        document.querySelector('.custom-theme').classList.add('selected');
+        document.querySelector('.custom-theme').style.background = color;
+        root.style.setProperty('--theme-color', color + '33');
     } else {
         document.querySelector(`.${color}-theme`).classList.add('selected');
+        root.style.setProperty('--theme-color', themeColor + '33');
     }
 
-    const root = document.documentElement;
-    const themeColor = color === 'blue' ? '#3399ff' : 
-                      color === 'red' ? '#ff3366' : 
-                      color === 'green' ? '#33cc99' : color;
-    root.style.setProperty('--theme-color', themeColor);
+    root.style.setProperty('--theme-solid', themeColor);
 
     document.querySelectorAll('button:not(.theme-option):not(#settingsGear)').forEach(button => {
         button.style.background = themeColor;
@@ -247,19 +268,6 @@ document.addEventListener('click', (e) => {
         !gear.contains(e.target)) {
         toggleSettings();
     }
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    if (!getCookie('speed')) {
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('speedSelection').style.display = 'block';
-    }
-    
-    const backdrop = document.createElement('div');
-    backdrop.className = 'theme-backdrop';
-    document.body.appendChild(backdrop);
-    
-    changeTheme(currentTheme);
 });
 
 function setSpeedPreference(speedValue) {
