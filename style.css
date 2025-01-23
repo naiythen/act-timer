@@ -1,4 +1,3 @@
-/* Base Styles */
 * {
     margin: 0;
     padding: 0;
@@ -33,7 +32,6 @@ body {
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.35);
 }
 
-/* Menu Styles */
 #menu {
     display: flex;
     flex-direction: column;
@@ -43,27 +41,24 @@ body {
     width: 100%;
 }
 
-#menu button {
+#menu button, .controls button, .speed-option, #customInput button {
     padding: 20px;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     border: none;
-    border-radius: 50px;
+    border-radius: 15px;
     cursor: pointer;
-    background: #3399ff;
+    background: var(--theme-color, #3399ff);
     color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 15px rgba(51, 153, 255, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 25px rgba(51, 153, 255, 0.3);
+    transform-style: preserve-3d;
 }
 
-#menu button:hover {
-    background: #1e7bcc;
-    transform: scale(1.02) translateY(-2px);
-    box-shadow: 0 12px 20px rgba(51, 153, 255, 0.35);
+#menu button:hover, .controls button:hover, .speed-option:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(51, 153, 255, 0.4);
 }
 
-/* Timer Screen Styles */
 #timerScreen {
     text-align: center;
     display: none;
@@ -107,15 +102,14 @@ body {
 .progress-bar {
     width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, #3399ff, #66b3ff);
+    background: linear-gradient(90deg, var(--theme-color, #3399ff), #66b3ff);
     border-radius: 15px;
     transition: width 1s ease;
     box-shadow: 0 2px 4px rgba(51, 153, 255, 0.2);
 }
 
-/* Settings Styles */
 #settingsGear {
-    position: fixed;
+    position: absolute;
     bottom: 30px;
     right: 30px;
     z-index: 1000;
@@ -132,10 +126,7 @@ body {
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
-}
-
-#settingsGear:hover {
-    transform: rotate(90deg) scale(1.1);
+    backdrop-filter: blur(5px);
 }
 
 #settingsMenu {
@@ -199,7 +190,6 @@ body {
     transition: opacity 0.3s ease;
 }
 
-/* Speed Selection Styles */
 #speedSelection {
     position: fixed;
     top: 50%;
@@ -233,7 +223,22 @@ body {
     transform: translateY(-3px);
 }
 
-/* Animations */
+#backArrow {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    font-size: 1.8rem;
+    text-decoration: none;
+    background: linear-gradient(135deg, #ff3b3b, #e63737);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    display: none;
+    box-shadow: 0 6px 15px rgba(255, 59, 59, 0.25);
+    transition: all 0.3s ease;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -245,7 +250,6 @@ body {
     100% { transform: translateY(0px); }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .container {
         padding: 20px;
