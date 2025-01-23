@@ -620,3 +620,85 @@ button:focus {
 .counter-container.blurred .question-text {
     filter: blur(8px);
 }
+
+/* Speed Selection Styles */
+#speedSelection {
+    display: none;
+    text-align: center;
+    padding: 30px;
+    animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.speed-subtitle {
+    font-size: 1.4rem;
+    color: #666;
+    margin-bottom: 40px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.speed-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.speed-option {
+    padding: 25px;
+    border: none;
+    border-radius: 18px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.speed-option:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.speed-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.speed-emoji {
+    font-size: 2.5rem;
+    min-width: 60px;
+}
+
+.speed-text h3 {
+    font-size: 1.4rem;
+    color: #333;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.speed-text p {
+    color: #666;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.speed-note {
+    margin-top: 30px;
+    color: #999;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
