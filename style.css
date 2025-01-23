@@ -702,3 +702,148 @@ button:focus {
         transform: translateY(0);
     }
 }
+/* Settings Gear */
+#settingsGear {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+#settingsGear:hover {
+    transform: rotate(90deg) scale(1.1);
+    background: rgba(0, 0, 0, 0.9);
+}
+
+/* Settings Menu */
+#settingsMenu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 33.3%;
+    min-width: 400px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(15px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-out;
+    z-index: 1000;
+}
+
+#settingsMenu.settings-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.settings-section {
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.settings-section h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Theme Options */
+.theme-options {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.theme-option {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+}
+
+.theme-option:hover {
+    transform: translateY(-3px);
+}
+
+.theme-check {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.theme-option.selected .theme-check {
+    opacity: 1;
+}
+
+.blue-theme { background: #3399ff; }
+.red-theme { background: #ff3366; }
+.green-theme { background: #33cc99; }
+.custom-theme { 
+    background: conic-gradient(#ff3366, #ffcc33, #33cc99, #3399ff, #ff3366);
+    position: relative;
+}
+
+/* Stats Display */
+.stats-display {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.speed-reset {
+    background: rgba(51, 153, 255, 0.1);
+    border: 2px solid #3399ff;
+    color: #3399ff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.speed-reset:hover {
+    background: #3399ff;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Theme Background Effect */
+.theme-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, var(--theme-color, rgba(51, 153, 255, 0.1)) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+}
