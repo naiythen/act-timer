@@ -7,6 +7,40 @@
 </head>
 <body>
     <div class="container">
+<!-- Settings Gear -->
+<button id="settingsGear" onclick="toggleSettings()">⚙️</button>
+
+<!-- Settings Menu -->
+<div id="settingsMenu" class="settings-hidden">
+    <div class="settings-section">
+        <h3>🎨 Theme Preferences</h3>
+        <div class="theme-options">
+            <div class="theme-option blue-theme selected" onclick="changeTheme('blue')">
+                <div class="theme-check">✔️</div>
+            </div>
+            <div class="theme-option red-theme" onclick="changeTheme('red')">
+                <div class="theme-check">✔️</div>
+            </div>
+            <div class="theme-option green-theme" onclick="changeTheme('green')">
+                <div class="theme-check">✔️</div>
+            </div>
+            <div class="theme-option custom-theme" onclick="document.getElementById('colorPicker').click()">
+                <input type="color" id="colorPicker" onchange="changeTheme(this.value)" hidden>
+                <div class="theme-check">✔️</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="settings-section">
+        <h3>📈 Usage Statistics</h3>
+        <div id="timeStats" class="stats-display"></div>
+    </div>
+    
+    <div class="settings-section">
+        <h3>⏱️ Speed Preference</h3>
+        <button class="speed-reset" onclick="resetSpeedPreference()">Reset Pace Settings</button>
+    </div>
+</div>
 <div id="speedSelection" style="display: none;">
     <h2>⏱️ Set Your Pace</h2>
     <p class="speed-subtitle">Choose how early you want to finish sections:</p>
