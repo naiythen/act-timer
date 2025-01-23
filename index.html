@@ -7,6 +7,40 @@
 </head>
 <body>
     <div class="container">
+<div id="speedSelection" style="display: none;">
+    <h2>⏱️ Set Your Pace</h2>
+    <p class="speed-subtitle">Choose how early you want to finish sections:</p>
+    <div class="speed-options">
+        <button class="speed-option" onclick="setSpeedPreference(0)">
+            <div class="speed-content">
+                <span class="speed-emoji">🕒</span>
+                <div class="speed-text">
+                    <h3>Right on Time</h3>
+                    <p>Perfect if you like to use all available time</p>
+                </div>
+            </div>
+        </button>
+        <button class="speed-option" onclick="setSpeedPreference(1)">
+            <div class="speed-content">
+                <span class="speed-emoji">⏩</span>
+                <div class="speed-text">
+                    <h3>5 Minutes Early</h3>
+                    <p>Gives you time to review answers</p>
+                </div>
+            </div>
+        </button>
+        <button class="speed-option" onclick="setSpeedPreference(2)">
+            <div class="speed-content">
+                <span class="speed-emoji">🚀</span>
+                <div class="speed-text">
+                    <h3>10 Minutes Early</h3>
+                    <p>For fast test-takers who want buffer time</p>
+                </div>
+            </div>
+        </button>
+    </div>
+    <p class="speed-note">You can change this later in settings</p>
+</div>
         <div id="menu">
             <button onclick="startTimer('English', 45, 75)">English (45 min)</button>
             <button onclick="startTimer('Math', 60, 60)">Math (60 min)</button>
