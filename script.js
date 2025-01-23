@@ -12,6 +12,54 @@ const fullTestSections = [
     { name: "Science", time: 35, questions: 40 },
 ];
 
+// Cookie handling functions
+function getCookie(name) {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [cookieName, cookieValue] = cookie.split('=');
+        if (cookieName.trim() === name) {
+            return cookieValue;
+        }
+    }
+    return null;
+}
+
+function setCookie(name, value, days = 365) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/;SameSite=Lax`;
+}
+
+// Show speed selection on first visit
+document.addEventListener('DOMContentLoaded', function() {
+    if (!getCookie('speed') && window.location.pathname === '/') {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('speedSelection').style.display = 'block';
+    }
+});
+
+function setSpeedPreference(speedValue) {
+    setCookie('speed', speedValue);
+    document.getElementById('speedSelection').style.display = 'none';
+    document.getElementById('menu').style.display = 'flex';
+    
+    // Show visual confirmation
+    const confirmation = document.createElement('div');
+    confirmation.textContent = '⏱️ Speed preference saved!';
+    confirmation.style.position = 'fixed';
+    confirmation.style.bottom = '20px';
+    confirmation.style.right = '20px';
+    confirmation.style.background = '#3399ff';
+    confirmation.style.color = 'white';
+    confirmation.style.padding = '15px 25px';
+    confirmation.style.borderRadius = '8px';
+    confirmation.style.boxShadow = '0 4px 15px rgba(51, 153, 255, 0.3)';
+    confirmation.style.zIndex = '1000';
+    confirmation.style.fontWeight = '500';
+    document.body.appendChild(confirmation);
+    setTimeout(() => confirmation.remove(), 2000);
+}
+
 function startTimer(sectionName, durationMinutes, numQuestions) {
     showTimerScreen(sectionName);
     remainingTime = durationMinutes * 60;
@@ -51,11 +99,21 @@ function updateQuestionGuidance() {
         questionCounter.style.display = "none";
         return;
     }
-    const timePerQuestion = initialTime / totalQuestions;
+    
+    // Get speed preference
+    const speed = parseInt(getCookie('speed')) || 0;
+    const speedOffset = speed * 5 * 60; // Convert to seconds
+    
+    // Calculate adjusted time
+    const adjustedTime = Math.max(initialTime - speedOffset, 1);
+    const timePerQuestion = adjustedTime / totalQuestions;
+    const elapsedTime = initialTime - remainingTime;
+    
     const questionsShouldComplete = Math.min(
-        Math.ceil((initialTime - remainingTime) / timePerQuestion),
+        Math.ceil(elapsedTime / timePerQuestion),
         totalQuestions
     );
+
     if (!questionCounter.querySelector(".counter-container")) {
         const container = document.createElement("div");
         container.className = "counter-container";
@@ -207,4 +265,5 @@ function goBack() {
     document.getElementById("timerScreen").style.display = "none";
     document.getElementById("customInput").style.display = "none";
     document.getElementById("backArrow").style.display = "none";
+    document.getElementById("speedSelection").style.display = "none";
 }
