@@ -8,6 +8,24 @@
 </head>
 <body>
     <div class="container">
+<!-- Add color picker container -->
+<div class="theme-option custom-theme" onclick="document.getElementById('colorPicker').click()">
+    <input type="color" id="colorPicker" onchange="changeTheme(this.value)" hidden>
+    <div class="theme-check">✔️</div>
+    <div class="custom-theme-label">🎨</div>
+</div>
+
+<style>
+    /* Add custom theme label */
+    .custom-theme-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+        pointer-events: none;
+    }
+</style>
         <button id="settingsGear" onclick="toggleSettings()">⚙️</button>
         
         <div id="settingsMenu">
