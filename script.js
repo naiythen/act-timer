@@ -174,11 +174,11 @@ function toggleSettings() {
     
     if (isSettingsOpen) {
         menu.classList.add('settings-visible');
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('menu-open');
         updateStatsDisplay();
     } else {
         menu.classList.remove('settings-visible');
-        document.body.style.overflow = 'auto';
+        document.body.classList.remove('menu-open');
     }
 }
 
@@ -188,6 +188,7 @@ function changeTheme(color) {
     
     document.querySelectorAll('.theme-option').forEach(option => {
         option.classList.remove('selected');
+        option.style.background = ''; // Reset custom color
     });
 
     const root = document.documentElement;
@@ -195,27 +196,28 @@ function changeTheme(color) {
     
     if(color === 'blue') {
         themeColor = '#3399ff';
+        document.querySelector('.blue-theme').classList.add('selected');
     } else if(color === 'red') {
         themeColor = '#ff3366';
+        document.querySelector('.red-theme').classList.add('selected');
     } else if(color === 'green') {
         themeColor = '#33cc99';
-    }
-    
-    if(color.startsWith('#')) {
-        document.querySelector('.custom-theme').classList.add('selected');
-        document.querySelector('.custom-theme').style.background = color;
-        root.style.setProperty('--theme-color', color + '33');
-    } else {
-        document.querySelector(`.${color}-theme`).classList.add('selected');
-        root.style.setProperty('--theme-color', themeColor + '33');
+        document.querySelector('.green-theme').classList.add('selected');
+    } else if(color.startsWith('#')) {
+        const customTheme = document.querySelector('.custom-theme');
+        customTheme.classList.add('selected');
+        customTheme.style.background = color;
+        themeColor = color;
     }
 
+    root.style.setProperty('--theme-color', themeColor + '33');
     root.style.setProperty('--theme-solid', themeColor);
 
     document.querySelectorAll('button:not(.theme-option):not(#settingsGear)').forEach(button => {
         button.style.background = themeColor;
     });
 }
+
 
 function startTracking() {
     trackingStartTime = Date.now();
@@ -287,9 +289,15 @@ function showConfirmation(text) {
     confirmation.textContent = text;
     confirmation.className = 'confirmation-toast';
     document.body.appendChild(confirmation);
-    setTimeout(() => confirmation.remove(), 3000);
+    
+    // Force reflow to trigger animation
+    void confirmation.offsetWidth;
+    
+    setTimeout(() => {
+        confirmation.style.animation = 'slideOut 0.3s ease-in forwards';
+        setTimeout(() => confirmation.remove(), 300);
+    }, 2700);
 }
-
 function startFullTest() {
     currentFullTestSection = 0;
     startNextFullTestSection();
