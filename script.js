@@ -224,8 +224,26 @@ function setSpeedPreference(speedValue) {
 }
 
 function setPacePreference(speedValue) {
+
   console.log("setPacePreference called with speedValue:", speedValue);
-  setPacePreference(parseInt(speedValue));
+  setCookie("speed", speedValue);
+  populatePaceSettings(); 
+
+  const confirmation = document.createElement("div");
+  confirmation.textContent = "⏱️ Pace preference saved!";
+  confirmation.style.position = "absolute";
+  confirmation.style.top = "auto";
+  confirmation.style.bottom = "20px";
+  confirmation.style.right = "20px";
+  confirmation.style.background = "#3399ff";
+  confirmation.style.color = "white";
+  confirmation.style.padding = "15px 25px";
+  confirmation.style.borderRadius = "8px";
+  confirmation.style.boxShadow = "0 4px 15px rgba(51, 153, 255, 0.3)";
+  confirmation.style.zIndex = "1002";
+  confirmation.style.fontWeight = "500";
+  document.querySelector(".container").appendChild(confirmation);
+  setTimeout(() => confirmation.remove(), 2000);
 }
 
 function startTimer(sectionName, durationMinutes, numQuestions) {
