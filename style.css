@@ -439,6 +439,16 @@ body.dark-theme #questionCounter {
     padding: 15px;
     font-size: 1.3rem;
   }
+  #menu button:hover,
+  .controls button:hover,
+  #nextSectionContainer button:hover,
+  #backArrow:hover,
+  #settingsPage button:hover,
+  #settingsPage select:hover,
+  #settingsButton:hover,
+  #fullscreenButton:hover {
+    transform: none;
+  }
 }
 @media (max-width: 480px) {
   .container {
