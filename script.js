@@ -224,10 +224,9 @@ function setSpeedPreference(speedValue) {
 }
 
 function setPacePreference(speedValue) {
-
   console.log("setPacePreference called with speedValue:", speedValue);
   setCookie("speed", speedValue);
-  populatePaceSettings(); 
+  populatePaceSettings();
 
   const confirmation = document.createElement("div");
   confirmation.textContent = "⏱️ Pace preference saved!";
@@ -454,6 +453,7 @@ function goBack() {
   document.getElementById("backArrow").style.display = "none";
   document.getElementById("settingsPage").style.display = "none";
   document.getElementById("speedSelection").style.display = "none";
+  document.getElementById("fullscreenButton").style.display = "block";
 }
 
 function openSettings() {
