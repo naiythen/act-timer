@@ -295,10 +295,9 @@ function updateQuestionGuidance() {
   const timePerQuestion = adjustedTime / totalQuestions;
   const elapsedTime = initialTime - remainingTime;
 
-  const questionsShouldComplete = Math.min(
-    Math.ceil(elapsedTime / timePerQuestion),
-    totalQuestions
-  );
+  // Fix for Bug 1: Ensure we start at question 1 or the correct initial proportion
+  let questionsShouldComplete = Math.max(1, Math.ceil(elapsedTime / timePerQuestion));
+  questionsShouldComplete = Math.min(questionsShouldComplete, totalQuestions);
 
   if (!questionCounter.querySelector(".counter-container")) {
     const container = document.createElement("div");
@@ -361,7 +360,10 @@ function startInterval() {
         updateProgressBar();
         updateQuestionGuidance();
         isRunning = false;
-        showNextSectionButton();
+        // Fix for Bug 2: Only show next section button if it's part of a full test and not the last section
+        if (currentFullTestSection > 0 && currentFullTestSection < fullTestSections.length) {
+          showNextSectionButton();
+        }
       }
     }
   }, 1000);
@@ -389,9 +391,7 @@ function resetTimer() {
 }
 
 function showNextSectionButton() {
-  if (currentFullTestSection < fullTestSections.length) {
-    document.getElementById("nextSectionContainer").style.display = "block";
-  }
+  document.getElementById("nextSectionContainer").style.display = "block";
 }
 
 function hideNextSectionButton() {
