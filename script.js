@@ -246,6 +246,7 @@ function setPacePreference(speedValue) {
 }
 
 function startTimer(sectionName, durationMinutes, numQuestions) {
+  currentSection = sectionName;
   showTimerScreen(sectionName);
   remainingTime = durationMinutes * 60;
   initialTime = remainingTime;
@@ -288,14 +289,10 @@ function updateQuestionGuidance() {
     return;
   }
 
-  const speed = parseInt(getCookie("speed")) || 0;
-  const speedOffset = speed * 5 * 60;
-
-  const adjustedTime = Math.max(initialTime - speedOffset, 1);
+  const adjustedTime = initialTime; // No pace reduction for custom timer
   const timePerQuestion = adjustedTime / totalQuestions;
   const elapsedTime = initialTime - remainingTime;
 
-  // Fix for Bug 1: Ensure we start at question 1 or the correct initial proportion
   let questionsShouldComplete = Math.max(1, Math.ceil(elapsedTime / timePerQuestion));
   questionsShouldComplete = Math.min(questionsShouldComplete, totalQuestions);
 
@@ -360,7 +357,6 @@ function startInterval() {
         updateProgressBar();
         updateQuestionGuidance();
         isRunning = false;
-        // Fix for Bug 2: Only show next section button if it's part of a full test and not the last section
         if (currentFullTestSection > 0 && currentFullTestSection < fullTestSections.length) {
           showNextSectionButton();
         }
@@ -442,6 +438,34 @@ function startCustomTimer() {
     alert("Please enter valid time and number of questions.");
     return;
   }
+
+  const speedPreference = parseInt(getCookie("speed")) || 0;
+  let paceReductionMinutes = 0;
+  if (speedPreference === 1) {
+    paceReductionMinutes = 5;
+  } else if (speedPreference === 2) {
+    paceReductionMinutes = 10;
+  }
+
+  if (customTime <= paceReductionMinutes && paceReductionMinutes > 0) {
+    const notification = document.createElement("div");
+    notification.textContent = "There is no pacing on custom timers";
+    notification.style.position = "absolute";
+    notification.style.top = "auto";
+    notification.style.bottom = "20px";
+    notification.style.left = "50%";
+    notification.style.transform = "translateX(-50%)";
+    notification.style.background = "#f44336";
+    notification.style.color = "white";
+    notification.style.padding = "15px 25px";
+    notification.style.borderRadius = "8px";
+    notification.style.boxShadow = "0 4px 15px rgba(244, 67, 54, 0.3)";
+    notification.style.zIndex = "1002";
+    notification.style.fontWeight = "500";
+    document.querySelector(".container").appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  }
+
   startTimer("Custom Section", customTime, customQuestions);
 }
 
