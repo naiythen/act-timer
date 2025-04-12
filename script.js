@@ -1,39 +1,78 @@
-let timerInterval;
-let remainingTime = 0;
+let timerInterval = null;
 let isRunning = false;
 let currentSection = "";
 let totalQuestions = 0;
-let initialTime = 0;
-let currentFullTestSection = 0;
+let initialDurationSeconds = 0;
+let endTime = 0;
+let pausedTime = 0;
+let wakeLock = null;
+let isFullTest = false;
+let currentFullTestSectionIndex = 0;
+let notificationTimeout = null;
+
 const fullTestSections = [
-  {
-    name: "English",
-    time: 45,
-    questions: 75,
-  },
-  {
-    name: "Math",
-    time: 60,
-    questions: 60,
-  },
-  {
-    name: "Reading",
-    time: 35,
-    questions: 40,
-  },
-  {
-    name: "Science",
-    time: 35,
-    questions: 40,
-  },
+  { name: "English", time: 45, questions: 75 },
+  { name: "Math", time: 60, questions: 60 },
+  { name: "Break", time: 10, questions: 0 },
+  { name: "Reading", time: 35, questions: 40 },
+  { name: "Science", time: 35, questions: 40 },
 ];
+
+const paceDescriptions = {
+  0: "On Time",
+  1: "5 Min Early",
+  2: "10 Min Early",
+};
+
+const timeDisplay = document.getElementById("timeDisplay");
+const progressBar = document.querySelector(".progress-bar");
+const sectionTitle = document.getElementById("sectionTitle");
+const questionPacingDisplay = document.getElementById("questionPacing");
+const paceDescriptionSpan = document.getElementById("paceDescription");
+const targetQuestionSpan = document.getElementById("targetQuestion");
+const totalQuestionCountSpan = document.getElementById("totalQuestionCount");
+const separatorSpan = questionPacingDisplay.querySelector(".separator");
+const togglePacingVisibilityButton = document.getElementById(
+  "togglePacingVisibility"
+); // Get eye button ref
+const pauseResumeButton = document.getElementById("pauseResumeButton");
+const backArrow = document.getElementById("backArrow");
+const settingsButton = document.getElementById("settingsButton");
+const fullscreenButton = document.getElementById("fullscreenButton");
+const alarmSound = document.getElementById("alarmSound");
+const fullTestProgressDisplay = document.getElementById("fullTestProgress");
+const notificationArea = document.getElementById("notificationArea");
+
+function initialize() {
+  const savedSpeed = getCookie("speed");
+  if (savedSpeed === null && !getCookie("speedPromptShown")) {
+    showSpeedSelection();
+    setCookie("speedPromptShown", "true", 1);
+  } else {
+    showMenu();
+  }
+  applyTheme();
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+  initializeSettingsPage();
+
+  // Add event listener for the pacing visibility toggle here in initialize
+  if (togglePacingVisibilityButton) {
+    togglePacingVisibilityButton.addEventListener("click", () => {
+      // Ensure questionPacingDisplay is the element containing the class
+      if (questionPacingDisplay) {
+        questionPacingDisplay.classList.toggle("blurred");
+      }
+    });
+  }
+}
 
 function getCookie(name) {
   const cookies = document.cookie.split(";");
   for (let cookie of cookies) {
     const [cookieName, cookieValue] = cookie.split("=");
     if (cookieName.trim() === name) {
-      return cookieValue;
+      return decodeURIComponent(cookieValue);
     }
   }
   return null;
@@ -42,37 +81,59 @@ function getCookie(name) {
 function setCookie(name, value, days = 365) {
   const date = new Date();
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/;SameSite=Lax`;
+  const encodedValue = encodeURIComponent(value);
+  document.cookie = `${name}=${encodedValue};expires=${date.toUTCString()};path=/;SameSite=Lax`;
 }
 
 function setTheme(color) {
   setCookie("theme", color);
   applyTheme(color);
+  updateSelectedThemeUI(color);
 }
 
 function applyTheme(color) {
-  let themeColor = color;
+  let themeColor = color || getCookie("theme");
+
   if (!themeColor) {
-    themeColor = getCookie("theme") || "#3498db";
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    themeColor = prefersDark ? "#3498db" : "#3498db";
+    setCookie("theme", themeColor);
   }
 
-  console.log("applyTheme - themeColor:", themeColor);
-  if (!themeColor) {
-    console.error("applyTheme - themeColor is still falsy after fallback!");
-    return;
+  const rgb = hexToRgb(themeColor);
+  const luminance = 0.2126 * rgb.r + 0.7159 * rgb.g + 0.0721 * rgb.b;
+  const isDarkColor = luminance < 128;
+
+  if (isDarkColor) {
+    document.body.classList.add("dark-theme");
+    document.documentElement.style.setProperty(
+      "--theme-color-dark",
+      getDarkerShade(themeColor, 0.4)
+    );
+    document.documentElement.style.setProperty(
+      "--theme-color-light",
+      getDarkerShade(themeColor, 0.1)
+    );
+  } else {
+    document.body.classList.remove("dark-theme");
+    document.documentElement.style.setProperty(
+      "--theme-color-dark",
+      getDarkerShade(themeColor, 0.2)
+    );
+    document.documentElement.style.setProperty(
+      "--theme-color-light",
+      getLighterShade(themeColor, 0.3)
+    );
   }
-  document.documentElement.style.setProperty(
-    "--theme-color-dark",
-    getDarkerShade(themeColor, 0.3)
-  );
-  document.documentElement.style.setProperty(
-    "--theme-color-light",
-    getLighterShade(themeColor, 0.1)
-  );
+
   document.documentElement.style.setProperty("--primary-color", themeColor);
   document.documentElement.style.setProperty(
     "--primary-hover-color",
-    getDarkerShade(themeColor, 0.2)
+    isDarkColor
+      ? getLighterShade(themeColor, 0.2)
+      : getDarkerShade(themeColor, 0.2)
   );
   document.documentElement.style.setProperty(
     "--progress-bar-start",
@@ -82,418 +143,431 @@ function applyTheme(color) {
     "--progress-bar-end",
     getLighterShade(themeColor, 0.3)
   );
-
   document.documentElement.style.setProperty(
-    "--back-arrow-start",
-    getBackArrowStartColor(themeColor)
+    "--button-shadow",
+    `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`
   );
-  document.documentElement.style.setProperty(
-    "--back-arrow-end",
-    getBackArrowEndColor(themeColor)
-  );
-
-  const rgb = hexToRgb(themeColor);
   document.documentElement.style.setProperty(
     "--primary-rgb",
     `${rgb.r}, ${rgb.g}, ${rgb.b}`
   );
 }
 
-function getBackArrowStartColor(themeColor) {
-  const rgb = hexToRgb(themeColor);
-  const isDarkTheme = (rgb.r + rgb.g + rgb.b) / 3 < 128;
-  return isDarkTheme ? "#e63737" : "#ff3b3b";
-}
-
-function getBackArrowEndColor(themeColor) {
-  const rgb = hexToRgb(themeColor);
-  const isDarkTheme = (rgb.r + rgb.g + rgb.b) / 3 < 128;
-  return isDarkTheme ? "#cc3333" : "#e63737";
-}
-
 function getDarkerShade(color, factor) {
-  const rgb = hexToRgb(color);
-  let r = rgb.r;
-  let g = rgb.g;
-  let b = rgb.b;
-
-  r = Math.max(0, Math.round(r * (1 - factor)));
-  g = Math.max(0, Math.round(g * (1 - factor)));
-  b = Math.max(0, Math.round(b * (1 - factor)));
-  return rgbToHex(r, g, b);
+  const { r, g, b } = hexToRgb(color);
+  const newR = Math.max(0, Math.round(r * (1 - factor)));
+  const newG = Math.max(0, Math.round(g * (1 - factor)));
+  const newB = Math.max(0, Math.round(b * (1 - factor)));
+  return rgbToHex(newR, newG, newB);
 }
 
 function getLighterShade(color, factor) {
-  const rgb = hexToRgb(color);
-  let r = rgb.r;
-  let g = rgb.g;
-  let b = rgb.b;
-  r = Math.min(255, Math.round(r + (255 - r) * factor));
-  g = Math.min(255, Math.round(g + (255 - g) * factor));
-  b = Math.min(255, Math.round(b + (255 - b) * factor));
-  return rgbToHex(r, g, b);
+  const { r, g, b } = hexToRgb(color);
+  const newR = Math.min(255, Math.round(r + (255 - r) * factor));
+  const newG = Math.min(255, Math.round(g + (255 - g) * factor));
+  const newB = Math.min(255, Math.round(b + (255 - b) * factor));
+  return rgbToHex(newR, newG, newB);
 }
 
 function hexToRgb(hex) {
-  if (typeof hex !== "string" || !hex) {
-    console.error("hexToRgb - Invalid hex value:", hex);
-    return { r: 0, g: 0, b: 0 };
-  }
+  if (typeof hex !== "string" || !hex) return { r: 0, g: 0, b: 0 };
   hex = hex.replace("#", "");
-  let r = parseInt(hex.substring(0, 2), 16);
-  let g = parseInt(hex.substring(2, 4), 16);
-  let b = parseInt(hex.substring(4, 6), 16);
-  return {
-    r: r,
-    g: g,
-    b: b,
-  };
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return { r, g, b };
 }
 
 function rgbToHex(r, g, b) {
-  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+  return (
+    "#" +
+    [r, g, b]
+      .map((x) => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      })
+      .join("")
+  );
 }
 
-function componentToHex(c) {
-  let hex = c.toString(16);
-  return hex.length == 1 ? "0" + hex : hex;
+function showSpeedSelection() {
+  hideAllScreens();
+  document.getElementById("speedSelection").style.display = "flex";
 }
-
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen();
-    } else if (document.documentElement.mozRequestFullScreen) {
-      document.documentElement.mozRequestFullScreen();
-    } else if (document.documentElement.webkitRequestFullscreen) {
-      document.documentElement.webkitRequestFullscreen();
-    } else if (document.documentElement.msRequestFullscreen) {
-      document.documentElement.msRequestFullscreen();
-    }
-  } else {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.mozCancelFullScreen) {
-      document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-  applyTheme();
-  if (
-    !getCookie("speed") ||
-    getCookie("speed") === null ||
-    getCookie("speed") === undefined
-  ) {
-    document.getElementById("menu").style.display = "none";
-    document.getElementById("speedSelection").style.display = "block";
-  }
-
-  initializeSettingsPage();
-});
 
 function setSpeedPreference(speedValue) {
-  console.log("setSpeedPreference called with speedValue:", speedValue);
   setCookie("speed", speedValue);
-  document.getElementById("speedSelection").style.display = "none";
-  document.getElementById("menu").style.display = "flex";
-  if (document.getElementById("settingsPage").style.display === "block") {
-    populatePaceSettings();
-  }
-
-  const confirmation = document.createElement("div");
-  confirmation.textContent = "⏱️ Pace preference saved!";
-  confirmation.style.position = "absolute";
-  confirmation.style.top = "auto";
-  confirmation.style.bottom = "20px";
-  confirmation.style.right = "20px";
-  confirmation.style.background = "#3399ff";
-  confirmation.style.color = "white";
-  confirmation.style.padding = "15px 25px";
-  confirmation.style.borderRadius = "8px";
-  confirmation.style.boxShadow = "0 4px 15px rgba(51, 153, 255, 0.3)";
-  confirmation.style.zIndex = "1002";
-  confirmation.style.fontWeight = "500";
-  document.querySelector(".container").appendChild(confirmation);
-  setTimeout(() => confirmation.remove(), 2000);
+  showMenu();
 }
 
-function setPacePreference(speedValue) {
-  console.log("setPacePreference called with speedValue:", speedValue);
-  setCookie("speed", speedValue);
-  populatePaceSettings();
-
-  const confirmation = document.createElement("div");
-  confirmation.textContent = "⏱️ Pace preference saved!";
-  confirmation.style.position = "absolute";
-  confirmation.style.top = "auto";
-  confirmation.style.bottom = "20px";
-  confirmation.style.right = "20px";
-  confirmation.style.background = "#3399ff";
-  confirmation.style.color = "white";
-  confirmation.style.padding = "15px 25px";
-  confirmation.style.borderRadius = "8px";
-  confirmation.style.boxShadow = "0 4px 15px rgba(51, 153, 255, 0.3)";
-  confirmation.style.zIndex = "1002";
-  confirmation.style.fontWeight = "500";
-  document.querySelector(".container").appendChild(confirmation);
-  setTimeout(() => confirmation.remove(), 2000);
+function getSpeedAdjustmentMinutes() {
+  const speedPref = getCookie("speed") || "0";
+  if (speedPref === "1") return 5;
+  if (speedPref === "2") return 10;
+  return 0;
 }
 
-function startTimer(sectionName, durationMinutes, numQuestions) {
-  currentSection = sectionName;
-  showTimerScreen(sectionName);
-  remainingTime = durationMinutes * 60;
-  initialTime = remainingTime;
-  totalQuestions = numQuestions;
-  isRunning = true;
-  updateDisplay();
-  updateProgressBar();
-  updateQuestionGuidance();
+function startTimer(section, timeMinutes, questions) {
+  isFullTest = false;
+  currentSection = section;
+  totalQuestions = questions;
+  const adjustmentMinutes = getSpeedAdjustmentMinutes();
+  initialDurationSeconds = Math.max(1, (timeMinutes - adjustmentMinutes) * 60);
+  endTime = Date.now() + initialDurationSeconds * 1000;
+  pausedTime = 0;
+
+  setupTimerUI(false);
   startInterval();
 }
 
-function showTimerScreen(sectionName) {
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("customInput").style.display = "none";
-  document.getElementById("timerScreen").style.display = "block";
-  document.getElementById("backArrow").style.display = "flex";
-  document.getElementById("settingsPage").style.display = "none";
-  document.getElementById("speedSelection").style.display = "none";
-  document.getElementById("sectionTitle").textContent = sectionName;
-  document.getElementById("fullscreenButton").style.display = "none";
-}
-
-function updateDisplay() {
-  let minutes = Math.floor(remainingTime / 60);
-  let seconds = remainingTime % 60;
-  document.getElementById("timeDisplay").textContent =
-    String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
-}
-
-function updateProgressBar() {
-  const progressBar = document.getElementById("progressBar");
-  const percentComplete = ((initialTime - remainingTime) / initialTime) * 100;
-  progressBar.style.width = `${percentComplete}%`;
-}
-
-function updateQuestionGuidance() {
-  const questionCounter = document.getElementById("questionCounter");
-  if (totalQuestions === 0) {
-    questionCounter.style.display = "none";
-    return;
-  }
-
-  const adjustedTime = initialTime; // No pace reduction for custom timer
-  const timePerQuestion = adjustedTime / totalQuestions;
-  const elapsedTime = initialTime - remainingTime;
-
-  let questionsShouldComplete = Math.max(1, Math.ceil(elapsedTime / timePerQuestion));
-  questionsShouldComplete = Math.min(questionsShouldComplete, totalQuestions);
-
-  if (!questionCounter.querySelector(".counter-container")) {
-    const container = document.createElement("div");
-    container.className = "counter-container";
-    const textSpan = document.createElement("span");
-    textSpan.className = "question-text";
-    textSpan.textContent = `You should be on Question: ${questionsShouldComplete}/${totalQuestions}`;
-    const toggleBtn = document.createElement("button");
-    toggleBtn.className = "eye-toggle";
-    toggleBtn.setAttribute("aria-label", "Toggle visibility");
-    const openEyeSVG = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg"
-    );
-    openEyeSVG.setAttribute("viewBox", "0 0 24 24");
-    openEyeSVG.setAttribute("stroke-linecap", "round");
-    openEyeSVG.setAttribute("stroke-linejoin", "round");
-    openEyeSVG.innerHTML =
-      '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-    const closedEyeSVG = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg"
-    );
-    closedEyeSVG.setAttribute("viewBox", "0 0 24 24");
-    closedEyeSVG.setAttribute("stroke-linecap", "round");
-    closedEyeSVG.setAttribute("stroke-linejoin", "round");
-    closedEyeSVG.innerHTML =
-      '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-    toggleBtn.appendChild(openEyeSVG);
-    toggleBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      container.classList.toggle("blurred");
-      toggleBtn.innerHTML = "";
-      toggleBtn.appendChild(
-        container.classList.contains("blurred") ? closedEyeSVG : openEyeSVG
-      );
-    });
-    container.appendChild(textSpan);
-    container.appendChild(toggleBtn);
-    questionCounter.innerHTML = "";
-    questionCounter.appendChild(container);
-  } else {
-    const textSpan = questionCounter.querySelector(".question-text");
-    textSpan.textContent = `You should be on Question: ${questionsShouldComplete}/${totalQuestions}`;
-  }
-}
-
-function startInterval() {
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    if (isRunning && remainingTime > 0) {
-      remainingTime--;
-      updateDisplay();
-      updateProgressBar();
-      updateQuestionGuidance();
-      if (remainingTime <= 0) {
-        clearInterval(timerInterval);
-        remainingTime = 0;
-        updateDisplay();
-        updateProgressBar();
-        updateQuestionGuidance();
-        isRunning = false;
-        if (currentFullTestSection > 0 && currentFullTestSection < fullTestSections.length) {
-          showNextSectionButton();
-        }
-      }
-    }
-  }, 1000);
-}
-
-function pauseTimer() {
-  isRunning = false;
-}
-
-function resumeTimer() {
-  if (!isRunning && remainingTime > 0) {
-    isRunning = true;
-    startInterval();
-  }
-}
-
-function resetTimer() {
-  clearInterval(timerInterval);
-  remainingTime = initialTime;
-  isRunning = false;
-  updateDisplay();
-  updateProgressBar();
-  updateQuestionGuidance();
-  hideNextSectionButton();
-}
-
-function showNextSectionButton() {
-  document.getElementById("nextSectionContainer").style.display = "block";
-}
-
-function hideNextSectionButton() {
-  document.getElementById("nextSectionContainer").style.display = "none";
-}
-
 function startFullTest() {
-  currentFullTestSection = 0;
+  isFullTest = true;
+  currentFullTestSectionIndex = 0;
   startNextFullTestSection();
 }
 
 function startNextFullTestSection() {
-  if (currentFullTestSection < fullTestSections.length) {
-    const section = fullTestSections[currentFullTestSection];
-    startTimer(
-      `ACT FULL Test - ${section.name}`,
-      section.time,
-      section.questions
-    );
-    currentFullTestSection++;
-  }
-}
-
-function nextSection() {
-  resetTimer();
-  hideNextSectionButton();
-  startNextFullTestSection();
-}
-
-function showCustomInput() {
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("customInput").style.display = "block";
-  document.getElementById("settingsPage").style.display = "none";
-  document.getElementById("speedSelection").style.display = "none";
-}
-
-function startCustomTimer() {
-  const customTime = parseInt(document.getElementById("customTime").value);
-  const customQuestions = parseInt(
-    document.getElementById("customQuestions").value
-  );
-  if (
-    isNaN(customTime) ||
-    isNaN(customQuestions) ||
-    customTime <= 0 ||
-    customQuestions <= 0
-  ) {
-    alert("Please enter valid time and number of questions.");
+  if (currentFullTestSectionIndex >= fullTestSections.length) {
+    stopTimer();
+    showNotification("Full ACT Test Completed!");
+    showMenu();
     return;
   }
 
-  const speedPreference = parseInt(getCookie("speed")) || 0;
-  let paceReductionMinutes = 0;
-  if (speedPreference === 1) {
-    paceReductionMinutes = 5;
-  } else if (speedPreference === 2) {
-    paceReductionMinutes = 10;
-  }
+  const section = fullTestSections[currentFullTestSectionIndex];
+  currentSection = section.name;
+  totalQuestions = section.questions;
+  const adjustmentMinutes =
+    section.name === "Break" ? 0 : getSpeedAdjustmentMinutes();
+  initialDurationSeconds = Math.max(1, (section.time - adjustmentMinutes) * 60);
+  endTime = Date.now() + initialDurationSeconds * 1000;
+  pausedTime = 0;
 
-  if (customTime <= paceReductionMinutes && paceReductionMinutes > 0) {
-    const notification = document.createElement("div");
-    notification.textContent = "There is no pacing on custom timers";
-    notification.style.position = "absolute";
-    notification.style.top = "auto";
-    notification.style.bottom = "20px";
-    notification.style.left = "50%";
-    notification.style.transform = "translateX(-50%)";
-    notification.style.background = "#f44336";
-    notification.style.color = "white";
-    notification.style.padding = "15px 25px";
-    notification.style.borderRadius = "8px";
-    notification.style.boxShadow = "0 4px 15px rgba(244, 67, 54, 0.3)";
-    notification.style.zIndex = "1002";
-    notification.style.fontWeight = "500";
-    document.querySelector(".container").appendChild(notification);
-    setTimeout(() => notification.remove(), 3000);
-  }
+  setupTimerUI(false);
+  fullTestProgressDisplay.textContent = `Section ${
+    currentFullTestSectionIndex + 1
+  } of ${fullTestSections.length}: ${currentSection}`;
+  fullTestProgressDisplay.style.display = "block";
 
-  startTimer("Custom Section", customTime, customQuestions);
+  startInterval();
 }
 
-function goBack() {
-  resetTimer();
-  document.getElementById("menu").style.display = "flex";
-  document.getElementById("timerScreen").style.display = "none";
-  document.getElementById("customInput").style.display = "none";
-  document.getElementById("backArrow").style.display = "none";
+function startCustomTimer() {
+  const timeInput = document.getElementById("customTime");
+  const questionsInput = document.getElementById("customQuestions");
+  const timeMinutes = parseInt(timeInput.value, 10);
+  const questions = parseInt(questionsInput.value, 10) || 0;
+
+  if (isNaN(timeMinutes) || timeMinutes <= 0) {
+    showNotification("Please enter a valid time in minutes.", "error");
+    return;
+  }
+
+  isFullTest = false;
+  currentSection = "Custom Timer";
+  totalQuestions = questions;
+  initialDurationSeconds = timeMinutes * 60;
+  endTime = Date.now() + initialDurationSeconds * 1000;
+  pausedTime = 0;
+
+  setupTimerUI(true);
+  startInterval();
+}
+
+function setupTimerUI(isCustom) {
+  hideAllScreens();
+  document.getElementById("timerScreen").style.display = "flex";
+  document.body.classList.add("timer-active");
+  backArrow.style.display = "block";
+  settingsButton.style.display = "none";
+  fullscreenButton.style.display = "block";
+
+  sectionTitle.textContent = currentSection;
+  pauseResumeButton.textContent = "Pause";
+
+  // Explicitly show the pacing display container
+  if (questionPacingDisplay) {
+    questionPacingDisplay.style.display = "inline-flex"; // Use inline-flex as per CSS
+    questionPacingDisplay.classList.remove("blurred"); // Ensure not blurred initially
+  }
+
+  if (isCustom) {
+    paceDescriptionSpan.textContent = "Pace: Custom";
+    paceDescriptionSpan.style.display = "inline"; // Ensure pace description is visible
+    if (totalQuestions > 0) {
+      totalQuestionCountSpan.textContent = `Questions: ${totalQuestions}`;
+      totalQuestionCountSpan.style.display = "inline";
+      targetQuestionSpan.style.display = "none";
+      separatorSpan.style.display = "inline";
+    } else {
+      totalQuestionCountSpan.style.display = "none";
+      targetQuestionSpan.style.display = "none";
+      separatorSpan.style.display = "none";
+    }
+  } else {
+    const speedPref = getCookie("speed") || "0";
+    paceDescriptionSpan.textContent = `Pace: ${
+      paceDescriptions[speedPref] || "On Time"
+    }`;
+    paceDescriptionSpan.style.display = "inline"; // Ensure pace description is visible
+    targetQuestionSpan.style.display = "inline";
+    totalQuestionCountSpan.style.display = "none";
+    separatorSpan.style.display = "inline";
+  }
+
+  updateTimerDisplay();
+}
+
+function startInterval() {
+  clearInterval(timerInterval);
+  isRunning = true;
+  timerInterval = setInterval(updateTimer, 100);
+  requestWakeLock();
+  updateTimer();
+}
+
+function updateTimer() {
+  if (!isRunning) return;
+
+  const now = Date.now();
+  const remainingSeconds = Math.max(0, Math.round((endTime - now) / 1000));
+
+  updateTimerDisplay(remainingSeconds);
+
+  if (remainingSeconds <= 0) {
+    handleTimerEnd();
+  }
+}
+
+function updateTimerDisplay(seconds = null) {
+  let remainingSeconds;
+  if (seconds !== null) {
+    remainingSeconds = seconds;
+  } else {
+    remainingSeconds = isRunning
+      ? Math.max(0, Math.round((endTime - Date.now()) / 1000))
+      : Math.max(0, Math.round(pausedTime / 1000));
+  }
+
+  const minutes = Math.floor(remainingSeconds / 60);
+  const displaySeconds = remainingSeconds % 60;
+  timeDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(
+    displaySeconds
+  ).padStart(2, "0")}`;
+
+  const progressPercent =
+    initialDurationSeconds > 0
+      ? (remainingSeconds / initialDurationSeconds) * 100
+      : 0;
+  progressBar.style.width = `${progressPercent}%`;
+
+  if (
+    targetQuestionSpan.style.display !== "none" &&
+    totalQuestions > 0 &&
+    initialDurationSeconds > 0
+  ) {
+    const elapsedSeconds = initialDurationSeconds - remainingSeconds;
+    const targetQuestion = Math.min(
+      totalQuestions,
+      Math.max(
+        1,
+        Math.ceil((elapsedSeconds / initialDurationSeconds) * totalQuestions)
+      )
+    );
+    targetQuestionSpan.textContent = `You should be on Q: ${targetQuestion}`;
+  }
+
+  if (currentSection !== "Custom Timer") {
+    const speedPref = getCookie("speed") || "0";
+    paceDescriptionSpan.textContent = `Pace: ${
+      paceDescriptions[speedPref] || "On Time"
+    }`;
+  }
+
+  if (remainingSeconds <= 10 && remainingSeconds > 0) {
+    timeDisplay.classList.add("warning");
+  } else {
+    timeDisplay.classList.remove("warning");
+  }
+}
+
+function handleTimerEnd() {
+  clearInterval(timerInterval);
+  isRunning = false;
+  releaseWakeLock();
+
+  if (alarmSound) {
+    alarmSound.currentTime = 0;
+    alarmSound.play().catch((e) => console.error("Error playing sound:", e));
+  }
+
+  timeDisplay.classList.add("warning");
+
+  if (isFullTest) {
+    currentFullTestSectionIndex++;
+    showNotification(
+      `${currentSection} Section Finished! Starting next section soon...`
+    );
+    setTimeout(() => {
+      timeDisplay.classList.remove("warning");
+      startNextFullTestSection();
+    }, 3000);
+  } else {
+    showNotification(`${currentSection} Timer Finished!`);
+  }
+}
+
+function pauseResumeTimer() {
+  if (isRunning) {
+    clearInterval(timerInterval);
+    pausedTime = endTime - Date.now();
+    isRunning = false;
+    pauseResumeButton.textContent = "Resume";
+    releaseWakeLock();
+  } else {
+    if (pausedTime > 0) {
+      endTime = Date.now() + pausedTime;
+      pausedTime = 0;
+      startInterval();
+      pauseResumeButton.textContent = "Pause";
+    }
+  }
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  isRunning = false;
+  isFullTest = false;
+  currentFullTestSectionIndex = 0;
+  pausedTime = 0;
+  endTime = 0;
+  releaseWakeLock();
+  showMenu();
+  resetTimerUI();
+}
+
+function resetTimerUI() {
+  timeDisplay.textContent = "00:00";
+  progressBar.style.width = "100%";
+  timeDisplay.classList.remove("warning");
+  if (questionPacingDisplay) questionPacingDisplay.style.display = "none"; // Hide pacing display on reset
+  if (questionPacingDisplay) questionPacingDisplay.classList.remove("blurred"); // Remove blur on reset
+  fullTestProgressDisplay.style.display = "none";
+  document.body.classList.remove("timer-active");
+  document.body.classList.remove("fullscreen-active");
+  backArrow.style.display = "none";
+  settingsButton.style.display = "block";
+  fullscreenButton.style.display = "block";
+}
+
+async function requestWakeLock() {
+  if ("wakeLock" in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => {
+        if (isRunning && document.visibilityState === "visible") {
+          requestWakeLock();
+        } else {
+          wakeLock = null;
+        }
+      });
+    } catch (err) {
+      console.error(`${err.name}, ${err.message}`);
+      wakeLock = null;
+    }
+  } else {
+    console.warn("Screen Wake Lock API not supported.");
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock !== null) {
+    wakeLock
+      .release()
+      .then(() => {
+        wakeLock = null;
+      })
+      .catch((err) => {
+        console.error("Error releasing wake lock:", err);
+      });
+  }
+}
+
+function handleVisibilityChange() {
+  if (
+    document.visibilityState === "visible" &&
+    isRunning &&
+    wakeLock === null
+  ) {
+    requestWakeLock();
+  }
+}
+
+function hideAllScreens() {
+  document
+    .querySelectorAll(".content-screen")
+    .forEach((screen) => (screen.style.display = "none"));
   document.getElementById("settingsPage").style.display = "none";
-  document.getElementById("speedSelection").style.display = "none";
-  document.getElementById("fullscreenButton").style.display = "block";
+}
+
+function showMenu() {
+  hideAllScreens();
+  resetTimerUI();
+  document.getElementById("menu").style.display = "flex";
+  document.body.classList.remove("timer-active");
+  backArrow.style.display = "none";
+  settingsButton.style.display = "block";
+  fullscreenButton.style.display = "block";
+}
+
+function showCustomInput() {
+  hideAllScreens();
+  document.getElementById("customInput").style.display = "flex";
+  backArrow.style.display = "none";
+  settingsButton.style.display = "block";
+}
+
+function backToMenu() {
+  showMenu();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement
+      .requestFullscreen()
+      .then(() => {
+        // Class added by handleFullscreenChange listener
+      })
+      .catch((err) =>
+        showNotification(`Error enabling full-screen: ${err.message}`, "error")
+      );
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen().then(() => {
+        // Class removed by handleFullscreenChange listener
+      });
+    }
+  }
+}
+
+function handleFullscreenChange() {
+  if (!document.fullscreenElement) {
+    document.body.classList.remove("fullscreen-active");
+  } else {
+    document.body.classList.add("fullscreen-active");
+  }
 }
 
 function openSettings() {
   document.getElementById("settingsPage").style.display = "flex";
-
-  document.getElementById("timerScreen").style.display = "none";
-  document.getElementById("customInput").style.display = "none";
-  document.getElementById("speedSelection").style.display = "none";
-  document.getElementById("backArrow").style.display = "none";
-
+  document.body.classList.add("settings-open");
   initializeSettingsPage();
 }
 
 function closeSettings() {
   document.getElementById("settingsPage").style.display = "none";
-  document.getElementById("menu").style.display = "flex";
+  document.body.classList.remove("settings-open");
 }
 
 function initializeSettingsPage() {
@@ -502,25 +576,61 @@ function initializeSettingsPage() {
 }
 
 function populatePaceSettings() {
-  const savedSpeed = getCookie("speed");
+  const savedSpeed = getCookie("speed") || "0";
   const paceSelect = document.getElementById("paceSelect");
-  if (savedSpeed !== null) {
-    paceSelect.value = savedSpeed;
-  } else {
-    paceSelect.value = "0";
-  }
+  paceSelect.value = savedSpeed;
 }
 
 function populateThemeSettings() {
   const savedTheme = getCookie("theme");
   if (savedTheme) {
-    const themeOptions = document.querySelectorAll(".theme-color-option");
-    themeOptions.forEach((option) => {
-      if (option.getAttribute("data-color") === savedTheme) {
-        option.classList.add("selected-theme");
-      } else {
-        option.classList.remove("selected-theme");
-      }
-    });
+    updateSelectedThemeUI(savedTheme);
   }
 }
+
+function updatePaceSetting(value) {
+  const previousValue = getCookie("speed") || "0";
+  if (value !== previousValue) {
+    setCookie("speed", value);
+    showNotification("Pace Preference Changed!");
+    if (isRunning && currentSection !== "Custom Timer") {
+      updateTimerDisplay();
+    }
+  }
+}
+
+function updateSelectedThemeUI(selectedColor) {
+  const themeOptions = document.querySelectorAll(".theme-color-option");
+  themeOptions.forEach((option) => {
+    if (option.getAttribute("data-color") === selectedColor) {
+      option.classList.add("selected-theme");
+    } else {
+      option.classList.remove("selected-theme");
+    }
+  });
+}
+
+function showNotification(message, type = "info") {
+  if (notificationTimeout) {
+    clearTimeout(notificationTimeout);
+    const existingNotif = notificationArea.querySelector(".notification");
+    if (existingNotif) {
+      existingNotif.remove();
+    }
+  }
+
+  const notification = document.createElement("div");
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+
+  notificationArea.appendChild(notification);
+
+  notificationTimeout = setTimeout(() => {
+    if (notificationArea.contains(notification)) {
+      notification.remove();
+    }
+    notificationTimeout = null;
+  }, 3000);
+}
+
+initialize();
