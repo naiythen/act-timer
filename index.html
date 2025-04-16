@@ -11,7 +11,7 @@
     <title>ACT Timer</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body class="dark-theme">
+  <body>
     <div class="container">
       <div id="speedSelection" class="content-screen" style="display: none">
         <h2>⏱️ Set Your Pace</h2>
@@ -50,7 +50,7 @@
         <p class="speed-note">You can change this later in settings</p>
       </div>
 
-      <div id="menu" class="content-screen">
+      <div id="menu" class="content-screen" style="display: flex">
         <button onclick="startTimer('English', 45, 75)">
           English (45 min)
         </button>
@@ -87,7 +87,7 @@
         <div class="progress-container">
           <div class="progress-bar"></div>
         </div>
-        <div id="questionPacing">
+        <div id="questionPacing" style="display: none">
           <span id="pacingTextContent">
             <span id="paceDescription">Pace: On Time</span>
             <span class="separator"> | </span>
@@ -124,86 +124,105 @@
         <div id="fullTestProgress" style="display: none">Section 1 of 4</div>
       </div>
 
+      <div id="settingsScreen" class="content-screen" style="display: none">
+        <h2>Settings</h2>
+
+        <div class="setting-item">
+          <label for="paceSelect">Pace Preference:</label>
+          <select id="paceSelect" onchange="updatePaceSetting(this.value)">
+            <option value="0">Right on Time</option>
+            <option value="1">5 Minutes Early</option>
+            <option value="2">10 Minutes Early</option>
+          </select>
+          <p class="settings-note">
+            (Note: Pace preference does not apply to Custom Timer - NB)
+          </p>
+        </div>
+
+        <div class="setting-item mode-setting-container">
+          <label>Appearance:</label>
+          <div class="mode-toggle-wrapper">
+            <span class="mode-icon">☀️</span>
+            <label class="mode-switch">
+              <input
+                type="checkbox"
+                id="modeToggle"
+                onchange="toggleMode(this.checked)"
+              />
+              <span class="mode-slider"></span>
+            </label>
+            <span class="mode-icon">🌙</span>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <label>Accent Color:</label>
+          <div class="theme-color-options">
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #3498db"
+              data-color="#3498db"
+              onclick="setTheme('#3498db')"
+            ></button>
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #2ecc71"
+              data-color="#2ecc71"
+              onclick="setTheme('#2ecc71')"
+            ></button>
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #e74c3c"
+              data-color="#e74c3c"
+              onclick="setTheme('#e74c3c')"
+            ></button>
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #f1c40f"
+              data-color="#f1c40f"
+              onclick="setTheme('#f1c40f')"
+            ></button>
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #9b59b6"
+              data-color="#9b59b6"
+              onclick="setTheme('#9b59b6')"
+            ></button>
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #1abc9c"
+              data-color="#1abc9c"
+              onclick="setTheme('#1abc9c')"
+            ></button>
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #e91e63"
+              data-color="#e91e63"
+              onclick="setTheme('#e91e63')"
+            ></button>
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #795548"
+              data-color="#795548"
+              onclick="setTheme('#795548')"
+            ></button>
+            <button
+              class="theme-color-option no-arrow"
+              style="background-color: #95a5a6"
+              data-color="#95a5a6"
+              onclick="setTheme('#95a5a6')"
+            ></button>
+          </div>
+        </div>
+
+        <button class="settings-back-button" onclick="closeSettings()">
+          Back to Menu
+        </button>
+      </div>
+
       <button id="backArrow" onclick="stopTimer()" style="display: none">
         ← Back
       </button>
-
-      <div id="settingsPage" style="display: none">
-        <div class="settings-content">
-          <h2>Settings</h2>
-          <div class="setting-item">
-            <label for="paceSelect">Pace Preference:</label>
-            <select id="paceSelect" onchange="updatePaceSetting(this.value)">
-              <option value="0">Right on Time</option>
-              <option value="1">5 Minutes Early</option>
-              <option value="2">10 Minutes Early</option>
-            </select>
-            <p class="settings-note">
-              (Note: Pace preference does not apply to Custom Timer - NB)
-            </p>
-          </div>
-          <div class="setting-item">
-            <label>Theme Color:</label>
-            <div class="theme-color-options">
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #3498db"
-                data-color="#3498db"
-                onclick="setTheme('#3498db')"
-              ></button>
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #2ecc71"
-                data-color="#2ecc71"
-                onclick="setTheme('#2ecc71')"
-              ></button>
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #e74c3c"
-                data-color="#e74c3c"
-                onclick="setTheme('#e74c3c')"
-              ></button>
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #f1c40f"
-                data-color="#f1c40f"
-                onclick="setTheme('#f1c40f')"
-              ></button>
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #9b59b6"
-                data-color="#9b59b6"
-                onclick="setTheme('#9b59b6')"
-              ></button>
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #1abc9c"
-                data-color="#1abc9c"
-                onclick="setTheme('#1abc9c')"
-              ></button>
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #e91e63"
-                data-color="#e91e63"
-                onclick="setTheme('#e91e63')"
-              ></button>
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #795548"
-                data-color="#795548"
-                onclick="setTheme('#795548')"
-              ></button>
-              <button
-                class="theme-color-option no-arrow"
-                style="background-color: #95a5a6"
-                data-color="#95a5a6"
-                onclick="setTheme('#95a5a6')"
-              ></button>
-            </div>
-          </div>
-          <button onclick="closeSettings()">Back</button>
-        </div>
-      </div>
 
       <button
         id="settingsButton"
@@ -236,9 +255,7 @@
       </button>
     </div>
     <div id="notificationArea"></div>
-
     <audio id="alarmSound" src="chime.mp3" preload="auto"></audio>
-
     <script src="script.js"></script>
   </body>
 </html>
